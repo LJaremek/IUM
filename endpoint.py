@@ -24,15 +24,15 @@ def execute_empty_model() -> str:
 
 
 @app.get("/model/{variant}")
-def execute_model(variant: str) -> int:
+async def execute_model(variant: str, data: list[int]) -> int:
     if variant == 'a':
-        return ModelA()([])
+        return ModelA()(data)
     elif variant == 'b':
-        return ModelB()([])
+        return ModelB()(data)
     else:
         raise HTTPException(status_code=404, detail="unknown model")
 
 
 @app.get("/ab_experiment")
-def ab_experiment() -> int:
-    return ModelA()([]) if randint(0, 1) == 0 else ModelB()([])
+def ab_experiment(data: list[int]) -> int:
+    return ModelA()(data) if randint(0, 1) == 0 else ModelB()(data)
