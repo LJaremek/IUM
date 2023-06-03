@@ -15,6 +15,16 @@ def run_ab(
         expected_results_path: str = "./data/y_test.csv",
         parameters_size: tuple[int, int] = (7, 24)
         ) -> tuple[float, float]:
+    """
+    Input:
+     * time_series_path: str - path to time series data
+     * parameters_path: str - path to parameters data
+     * expected_results_path: str - expected y data
+     * parameters_size: tuple[int, int] - shape of parameters (-, p1,  p2)
+
+    Output:
+     * results: tuple[float, float] - model a avg loss, model b avg loss
+    """
 
     X_s = pd.read_csv(time_series_path, header=None, index_col=False)
     X_p = pd.read_csv(parameters_path, header=None, index_col=False)
@@ -52,8 +62,10 @@ def run_ab(
 
             results[model].append(model_preds-y_expected)
 
-    print(sum(results["a"])/len(results["a"]))
-    print(sum(results["b"])/len(results["b"]))
+    a_avg: float = abs(sum(results["a"])/len(results["a"]))
+    b_avg: float = abs(sum(results["b"])/len(results["b"]))
+    return a_avg, b_avg
 
 
-run_ab()
+if __name__ == "__main__":
+    run_ab()
