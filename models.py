@@ -1,7 +1,10 @@
+import logging
 import json
 
 import torch.nn as nn
 import torch
+
+from logging_config import configure_logging
 
 
 class SuperMusicModel(nn.Module):
@@ -34,6 +37,10 @@ class WeakMusicModel(nn.Module):
 
 
 def get_models(conf_path: str = "./models.conf") -> tuple[dict, dict]:
+    configure_logging()
+
+    logger = logging.getLogger(__name__)
+
     with open(conf_path, "r", -1, "utf-8") as file:
         models_data = json.load(file)
 
@@ -42,14 +49,24 @@ def get_models(conf_path: str = "./models.conf") -> tuple[dict, dict]:
     model_a["params"] = models_data["a"]["params"]
     model_a["std"] = models_data["a"]["std"]
     model_a["mean"] = models_data["a"]["mean"]
-    model_a["model"] = SuperMusicModel(model_a["params"])
+
+    try:
+        model_a["model"] = torch.load(models_data["a"]["path"])
+    except AttributeError as e:
+        model_a["model"] = SuperMusicModel(model_a["params"])
+        logger.error("Error during load model A:", e)
 
     model_b = {}
     model_b["path"] = models_data["b"]["path"]
     model_b["params"] = models_data["b"]["params"]
     model_b["std"] = models_data["b"]["std"]
     model_b["mean"] = models_data["b"]["mean"]
-    model_b["model"] = WeakMusicModel(model_b["params"])
+
+    try:
+        model_b["model"] = torch.load(models_data["b"]["path"])
+    except AttributeError as e:
+        model_b["model"] = WeakMusicModel(model_b["params"])
+        logger.error("Error during load model B:", e)
 
     return model_a, model_b
 

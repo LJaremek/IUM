@@ -7,6 +7,7 @@ from fastapi import FastAPI, HTTPException
 import numpy as np
 import torch
 
+from logging_config import configure_logging
 from models import get_models
 import experiment_ab
 
@@ -15,11 +16,9 @@ exec: uvicorn endpoint:app --reload
 curl -X GET "127.0.0.1:8000/ab_experiment?time_series_path=./data/X_s_test.csv"
 """
 
-logging.basicConfig(
-    filename="logfile.txt",
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-    )
+configure_logging()
+
+logger = logging.getLogger(__name__)
 
 model_a_dict, model_b_dict = get_models()
 
@@ -31,7 +30,7 @@ app = FastAPI()
 
 @app.get("/model/")
 def execute_empty_model() -> str:
-    logging.warning("Call api /model/ without model name")
+    logger.warning("Call api /model/ without model name")
     return "you need to specify model variant"
 
 
@@ -54,7 +53,7 @@ async def execute_model(variant: str, data_: list) -> tuple[int, float, float]:
         result = int(
             float(preds[0][-1][0]*model_a_dict["std"]+model_a_dict["mean"])
             )
-        logging.info("Call api /model/ for model A")
+        logger.info("Call api /model/ for model A")
         return result, model_a_dict["std"], model_a_dict["mean"]
 
     elif variant == "b":
@@ -62,11 +61,11 @@ async def execute_model(variant: str, data_: list) -> tuple[int, float, float]:
         result = int(
             float(preds[0][-1][0]*model_b_dict["std"]+model_b_dict["mean"])
             )
-        logging.info("Call api /model/ for model B")
+        logger.info("Call api /model/ for model B")
         return result, model_b_dict["std"], model_b_dict["mean"]
 
     else:
-        logging.error(f"Call api /model/ for not exists model {variant}")
+        logger.error(f"Call api /model/ for not exists model {variant}")
         raise HTTPException(status_code=404, detail="unknown model")
 
 
@@ -87,7 +86,7 @@ def ab_experiment(
     Output:
      * results: tuple[float, float] - model a avg loss, model b avg loss
     """
-    logging.info("Call api for experiment A/B")
+    logger.info("Call api for experiment A/B")
     return experiment_ab.run_ab(
         time_series_path,
         parameters_path,
@@ -117,7 +116,7 @@ def ab_experiment(
 #     Output:
 #      * costs: tuple[float, float] - real costs, model costs
 #     """
-#     logging.info("Call api for success criterion")
+#     logger.info("Call api for success criterion")
 #     X_s, X_p, y = experiment_ab.unpack_data(
 #         time_series_path, parameters_path, expected_results_path
 #         )
