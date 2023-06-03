@@ -6,7 +6,29 @@ import pandas as pd
 import torch
 
 URL = "http://localhost:8000/model/"
-BATCH_SIZE = 8
+
+
+def unpack_data(
+        time_series_path: str = "./data/X_s_test.csv",
+        parameters_path: str = "./data/X_p_test.csv",
+        expected_results_path: str = "./data/y_test.csv",
+        parameters_size: tuple[int, int] = (7, 24)
+        ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+
+    X_s = pd.read_csv(time_series_path, header=None, index_col=False)
+    X_p = pd.read_csv(parameters_path, header=None, index_col=False)
+    y = pd.read_csv(expected_results_path, header=None, index_col=False)
+
+    p1, p2 = parameters_size
+
+    size = X_p.shape[0]//p1
+    X_p = X_p.to_numpy().reshape((size, p1, p2))
+
+    y = torch.tensor(y.values.astype("float32"))
+    X_s = torch.tensor(X_s.values.astype("float32"))
+    X_p = torch.tensor(X_p.astype("float32"))
+
+    return X_s, X_p, y
 
 
 def run_ab(
@@ -26,18 +48,10 @@ def run_ab(
      * results: tuple[float, float] - model a avg loss, model b avg loss
     """
 
-    X_s = pd.read_csv(time_series_path, header=None, index_col=False)
-    X_p = pd.read_csv(parameters_path, header=None, index_col=False)
-    y = pd.read_csv(expected_results_path, header=None, index_col=False)
-
-    p1, p2 = parameters_size
-
-    size = X_p.shape[0]//p1
-    X_p = X_p.to_numpy().reshape((size, p1, p2))
-
-    y = torch.tensor(y.values.astype("float32"))
-    X_s = torch.tensor(X_s.values.astype("float32"))
-    X_p = torch.tensor(X_p.astype("float32"))
+    X_s, X_p, y = unpack_data(
+        time_series_path, parameters_path, expected_results_path,
+        parameters_size
+        )
 
     dataset = data.TensorDataset(X_s, X_p, y)
     loader = data.DataLoader(dataset, shuffle=False)

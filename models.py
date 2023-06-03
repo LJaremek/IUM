@@ -21,7 +21,7 @@ class SuperMusicModel(nn.Module):
 
 
 class WeakMusicModel(nn.Module):
-    def __init__(self, num_params):
+    def __init__(self, num_params) -> None:
         super().__init__()
         self.lstm = nn.LSTM(
             input_size=1, hidden_size=10, num_layers=1, batch_first=True
